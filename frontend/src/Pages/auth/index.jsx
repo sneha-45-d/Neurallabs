@@ -47,17 +47,25 @@ const Auth = () => {
 
   const handleLogin = async () => {
     if (validateLogin()) {
-      const response = await apiClient.post(
-        LOGIN_ROUTE,
-        { email, password },
-        { withCredentials: true }
-      );
-      if (response.data.user.id) {
-        setUserInfo(response.data.user);
-        if (response.data.user.profileSetup) navigate("/courses");
-        else navigate("/profile");
+      try {
+        const response = await apiClient.post(
+          LOGIN_ROUTE,
+          { email, password },
+          { withCredentials: true }
+        );
+        if (response.data.user.id) {
+          setUserInfo(response.data.user);
+          if (response.data.user.profileSetup) navigate("/courses");
+          else navigate("/profile");
+        }
+      } catch (error) {
+        const message = error.response?.data;
+        toast.error(
+          typeof message === "string"
+            ? message
+            : error.message || "Unable to log in."
+        );
       }
-      console.log({ response });
     }
   };
 
