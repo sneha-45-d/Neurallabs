@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
@@ -8,8 +11,7 @@ app = Flask(__name__)
 # Configure CORS
 cors = CORS(app, origins='*')
 
-# Load dataset
-df = pd.read_csv('./YoutubeDataset.csv')
+df = pd.read_csv(Path(__file__).with_name("YoutubeDataset.csv"))
 print("Dataframe loaded:", df.head())
 
 # Video recommendation route
@@ -47,4 +49,4 @@ def recommend():
     return jsonify(response)
 
 if __name__ == '__main__':
-    app.run(port=5011, debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5011)))

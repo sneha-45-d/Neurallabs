@@ -6,26 +6,49 @@ import { Gradient } from "./design/Roadmap";
 const Videos = () => {
   const [query, setQuery] = useState(""); // State for user query
   const [videos, setVideos] = useState([]); // State for recommended videos
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Function to handle video search
   const handleSearch = async (searchQuery) => {
-    try {
-        const response = await fetch("http://127.0.0.1:5011/recommend", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ query: searchQuery }),
-        });
-
-        if (!response.ok) throw new Error("Network response was not ok");
-
-        const data = await response.json();
-        setVideos(data);
-    } catch (error) {
-        console.error("Error fetching videos:", error);
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) {
+      setError("Enter a keyword to search for videos.");
+      setVideos([]);
+      return;
     }
-};
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const recommendationUrl = (
+        import.meta.env.VITE_RECOMMENDATION_URL || "http://127.0.0.1:5011"
+      ).replace(/\/+$/, "");
+      const response = await fetch(`${recommendationUrl}/recommend`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: trimmedQuery }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Could not load video recommendations.");
+      }
+
+      setVideos(data);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+      setVideos([]);
+      setError(
+        "Video recommendations are unavailable. Please try again later."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Initial load: fetch top 10 Web Development videos
   useEffect(() => {
@@ -52,6 +75,21 @@ const Videos = () => {
         </div>
 
         {/* Display Recommended Videos */}
+        {error && (
+          <p className="pt-8 text-center text-red-300" role="alert">
+            {error}
+          </p>
+        )}
+        {isLoading && (
+          <p className="pt-8 text-center text-n-3" role="status">
+            Loading video recommendations...
+          </p>
+        )}
+        {!isLoading && !error && videos.length === 0 && (
+          <p className="pt-8 text-center text-n-3">
+            No video recommendations found.
+          </p>
+        )}
         <div className="relative pt-12 grid gap-6 md:grid-cols-2 md:gap-4 md:pb-[3rem]">
           {videos.map((video, index) => (
             <div
